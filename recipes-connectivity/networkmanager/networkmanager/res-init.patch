@@ -1,0 +1,14 @@
+diff --git a/src/dns-manager/nm-dns-manager.c b/src/dns-manager/nm-dns-manager.c
+index 38691f3..b1e91e8 100644
+--- a/src/dns-manager/nm-dns-manager.c
++++ b/src/dns-manager/nm-dns-manager.c
+@@ -1030,6 +1030,9 @@ nm_dns_manager_end_updates (NMDnsManager *mgr, const char *func)
+ 		g_clear_error (&error);
+ 	}
+ 
++	/* call res_init to keep glibc happy */
++	res_init();
++
+ 	memset (priv->prev_hash, 0, sizeof (priv->prev_hash));
+ }
+ 

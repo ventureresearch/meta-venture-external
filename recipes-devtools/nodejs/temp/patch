@@ -1,0 +1,159 @@
+diff --git a/meta-oe/recipes-devtools/nodejs/nodejs/0001-Fix-hardfloat-detection.patch b/meta-oe/recipes-devtools/nodejs/nodejs/0001-Fix-hardfloat-detection.patch
+new file mode 100644
+index 0000000..558446d
+--- /dev/null
++++ b/meta-oe/recipes-devtools/nodejs/nodejs/0001-Fix-hardfloat-detection.patch
+@@ -0,0 +1,44 @@
++From 0ffc68a4d2fec6ad246e60f3a4d5a0b3b489733e Mon Sep 17 00:00:00 2001
++From: Khem Raj <raj.khem@gmail.com>
++Date: Wed, 7 Nov 2012 11:51:26 -0500
++Subject: [PATCH] Fix hardfloat detection
++
++gcc has a builtin define to denote hard abi when in use, e.g. when
++using -mfloat-abi=hard it will define __ARM_PCS_VFP to 1 and therefore
++we should check that to determine which calling convention is in use
++and not __VFP_FP__ which merely indicates presence of VFP unit
++
++The fix has been provided by Khem Raj <raj.khem@gmail.com>
++
++Updated to v0.8 branch and resubmitted by Jason Kridner <jdk@ti.com>
++
++Upstream-Status: Forwarded
++---
++ deps/v8/src/platform-linux.cc |    4 ++--
++ 1 file changed, 2 insertions(+), 2 deletions(-)
++
++diff --git a/deps/v8/src/platform-linux.cc b/deps/v8/src/platform-linux.cc
++index ed9eb79..10d1879 100644
++--- a/deps/v8/src/platform-linux.cc
+++++ b/deps/v8/src/platform-linux.cc
++@@ -170,7 +170,7 @@ bool OS::ArmCpuHasFeature(CpuFeature feature) {
++ // calling this will return 1.0 and otherwise 0.0.
++ static void ArmUsingHardFloatHelper() {
++   asm("mov r0, #0":::"r0");
++-#if defined(__VFP_FP__) && !defined(__SOFTFP__)
+++#if defined(__ARM_PCS_VFP) && !defined(__SOFTFP__)
++   // Load 0x3ff00000 into r1 using instructions available in both ARM
++   // and Thumb mode.
++   asm("mov r1, #3":::"r1");
++@@ -195,7 +195,7 @@ static void ArmUsingHardFloatHelper() {
++ #else
++   asm("vmov d0, r0, r1");
++ #endif  // __thumb__
++-#endif  // defined(__VFP_FP__) && !defined(__SOFTFP__)
+++#endif  // defined(__ARM_PCS_VFP) && !defined(__SOFTFP__)
++   asm("mov r1, #0":::"r1");
++ }
++ 
++-- 
++1.7.9.5
++
+diff --git a/meta-oe/recipes-devtools/nodejs/nodejs/0002-Enable-NEON.patch b/meta-oe/recipes-devtools/nodejs/nodejs/0002-Enable-NEON.patch
+new file mode 100644
+index 0000000..2b83ff8
+--- /dev/null
++++ b/meta-oe/recipes-devtools/nodejs/nodejs/0002-Enable-NEON.patch
+@@ -0,0 +1,27 @@
++From 8891cb4cae57a6b7db54edb33a43743c4b09c53a Mon Sep 17 00:00:00 2001
++From: Jason Kridner <jdk@ti.com>
++Date: Wed, 7 Nov 2012 14:43:55 -0500
++Subject: [PATCH] Enable NEON
++
++Read this was necessary on a blog.
++
++http://www.code-with-passion.com/2012/11/07/cross-compiling-nodejs-and-node-modules-for-armbeaglebone/
++---
++ deps/v8/build/common.gypi |    1 +
++ 1 file changed, 1 insertion(+)
++
++diff --git a/deps/v8/build/common.gypi b/deps/v8/build/common.gypi
++index 7a780cc..237f53f 100644
++--- a/deps/v8/build/common.gypi
+++++ b/deps/v8/build/common.gypi
++@@ -29,6 +29,7 @@
++ 
++ {
++   'variables': {
+++    'arm_neon%': 1,
++     'use_system_v8%': 0,
++     'msvs_use_common_release': 0,
++     'gcc_version%': 'unknown',
++-- 
++1.7.9.5
++
+diff --git a/meta-oe/recipes-devtools/nodejs/nodejs/0003-Resolve-bad-rpath-issue-when-linking.patch b/meta-oe/recipes-devtools/nodejs/nodejs/0003-Resolve-bad-rpath-issue-when-linking.patch
+new file mode 100644
+index 0000000..b7e8b6c
+--- /dev/null
++++ b/meta-oe/recipes-devtools/nodejs/nodejs/0003-Resolve-bad-rpath-issue-when-linking.patch
+@@ -0,0 +1,29 @@
++From aaf38f17911941d979074e4d5f8475f4ad5595a8 Mon Sep 17 00:00:00 2001
++From: Nathan Rajlich <nathan@tootallnate.net>
++Date: Tue, 9 Oct 2012 09:49:00 -0700
++Subject: [PATCH] Resolve bad rpath issue when linking
++
++See http://piscisaureus.no.de/libuv/2012-10-09#16:42:44.577 to
++understand the issue.
++
++Added to OE by Jason Kridner <jdk@ti.com>
++---
++ common.gypi |    2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/common.gypi b/common.gypi
++index b26d2f3..8ae671b 100644
++--- a/common.gypi
+++++ b/common.gypi
++@@ -163,7 +163,7 @@
++       [ 'OS=="linux" or OS=="freebsd" or OS=="openbsd" or OS=="solaris"', {
++         'cflags': [ '-Wall', '-pthread', ],
++         'cflags_cc': [ '-fno-rtti', '-fno-exceptions' ],
++-        'ldflags': [ '-pthread', '-rdynamic' ],
+++        'ldflags': [ '-pthread' ],
++         'conditions': [
++           [ 'target_arch=="ia32"', {
++             'cflags': [ '-m32' ],
++-- 
++1.7.9.5
++
+diff --git a/meta-oe/recipes-devtools/nodejs/nodejs_0.8.14.bb b/meta-oe/recipes-devtools/nodejs/nodejs_0.8.14.bb
+new file mode 100644
+index 0000000..2cd37b2
+--- /dev/null
++++ b/meta-oe/recipes-devtools/nodejs/nodejs_0.8.14.bb
+@@ -0,0 +1,35 @@
++DESCRIPTION = "nodeJS Evented I/O for V8 JavaScript"
++HOMEPAGE = "http://nodejs.org"
++LICENSE = "MIT & BSD"
++LIC_FILES_CHKSUM = "file://LICENSE;md5=95a589a3257ab7dfe37d8a8379e3c72d"
++
++DEPENDS = "openssl"
++
++SRC_URI = "http://nodejs.org/dist/v${PV}/node-v${PV}.tar.gz \
++           file://0001-Fix-hardfloat-detection.patch \
++           file://0002-Enable-NEON.patch \
++           file://0003-Resolve-bad-rpath-issue-when-linking.patch \
++          "
++SRC_URI[md5sum] = "284fd2c7578064c339d9cf6a3a475ac7"
++SRC_URI[sha256sum] = "e5ce2aadb4df3ea4ca7a021106ffe09d286474476454038e9ed0135eac18e6d0"
++
++S = "${WORKDIR}/node-v${PV}"
++
++# v8 errors out if you have set CCACHE
++CCACHE = ""
++
++do_configure () {
++  export LD="${CXX}"
++  #./configure --without-snapshot --dest-cpu=arm --dest-os=linux --prefix=${prefix}
++  ./configure --prefix=${prefix} --without-snapshot
++}
++
++do_install () {
++  DESTDIR=${D} oe_runmake install
++}
++
++RDEPENDS_${PN} = "curl python-shell python-datetime python-subprocess python-crypt python-textutils python-netclient "
++RDEPENDS_${PN}_virtclass-native = "curl-native python-native"
++
++FILES_${PN} += "${libdir}/node/wafadmin ${libdir}/node_modules"
++BBCLASSEXTEND = "native"

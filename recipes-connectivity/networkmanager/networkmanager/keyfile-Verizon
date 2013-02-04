@@ -1,0 +1,16 @@
+
+[connection]
+id=Verizon
+uuid=758dce41-6366-4d3f-a32e-5c7351c4dfec
+type=cdma
+
+[ppp]
+noauth=false
+lcp-echo-failure=5
+lcp-echo-interval=30
+
+[cdma]
+number=#777
+
+[serial]
+baud=115200

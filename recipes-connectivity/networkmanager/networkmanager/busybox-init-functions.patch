@@ -1,0 +1,66 @@
+diff --git a/initscript/Debian/NetworkManager.in b/initscript/Debian/NetworkManager.in
+index 9cc254e..779b641 100755
+--- a/initscript/Debian/NetworkManager.in
++++ b/initscript/Debian/NetworkManager.in
+@@ -33,8 +33,6 @@ USER=root
+ # Gracefully exit if the package has been removed.
+ test -x $DAEMON || exit 0
+ 
+-. /lib/lsb/init-functions
+-
+ test -f /etc/default/NetworkManager && . /etc/default/NetworkManager
+ 
+ #
+@@ -46,8 +44,7 @@ d_start() {
+ 		chown $USER:$USER $PIDDIR
+ 	fi
+ 
+-	start-stop-daemon --start --quiet --pidfile $PIDFILE \
+-		--oknodo --user $USER --exec $DAEMON -- $DAEMON_OPTS --pid-file $PIDFILE
++	start-stop-daemon -S -x $DAEMON -- $DAEMON_OPTS --pid-file $PIDFILE
+ 
+ }
+ 
+@@ -55,34 +52,30 @@ d_start() {
+ #	Function that stops the daemon/service.
+ #
+ d_stop() {
+-	start-stop-daemon --stop --retry 5 --quiet --pidfile $PIDFILE \
+-		 --oknodo --user $USER --exec $DAEMON
++	start-stop-daemon -K -x $DAEMON
+  
+ }
+ 
+ 
+ case "$1" in
+   start)
+-	log_daemon_msg "Starting $DESC" "$NAME"
++	echo -n "Starting $DESC" "$NAME": 
+ 	d_start
+-	log_end_msg $?
++	echo "."
+ 	;;
+   stop)
+-	log_daemon_msg "Stopping $DESC" "$NAME"
++	echo -n "Stopping $DESC" "$NAME": 
+ 	d_stop
+-	log_end_msg $?
++	echo "."
+ 	;;
+   restart|force-reload)
+-	log_daemon_msg "Restarting $DESC" "$NAME"
++	echo -n "Restarting $DESC" "$NAME": 
+ 	d_stop
+ 	d_start
+-	log_end_msg $?
+-	;;
+-  status)
+-	status_of_proc -p $PIDFILE $DAEMON $NAME && exit 0 || exit $?
++	echo "."
+ 	;;
+   *)
+-	echo "Usage: $0 {start|stop|restart|force-reload|status}" >&2
++	echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+ 	exit 1
+ 	;;
+ esac

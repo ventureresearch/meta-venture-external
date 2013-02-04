@@ -1,0 +1,35 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          sslh
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: sslh
+# Description:       sslh, SSL/SSH multiplexer
+### END INIT INFO
+
+DAEMONARGS="--listen 0.0.0.0:443 --ssh 127.0.0.1:22 --ssl 127.0.0.1:8443"
+
+[ ! -x $DAEMONLOC ] && exit 0
+
+. /etc/default/rcS
+
+case "$1" in
+        start)
+                echo -n "Starting sslh: sslh..."
+                /sbin/start-stop-daemon --start --quiet --pidfile /var/run/sslh.pid --make-pidfile --exec /usr/sbin/sslh -- $DAEMONARGS > /dev/null &
+		echo "done."
+                ;;
+        stop)
+                echo -n "Ending sslh..."
+		/sbin/start-stop-daemon --stop --quiet --exec /usr/sbin/sslh
+		echo "done."
+                ;;
+	show)
+		;;
+        *)
+                echo "usage: /etc/init.d/sslh start|stop"
+                exit 1
+                ;;
+esac

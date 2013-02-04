@@ -1,0 +1,44 @@
+diff --git a/configure.ac b/configure.ac
+index 6388640..742c0a7 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -96,14 +96,6 @@ AC_ARG_ENABLE(ifcfg-rh, AS_HELP_STRING([--enable-ifcfg-rh], [enable ifcfg-rh con
+ AC_ARG_ENABLE(ifcfg-suse, AS_HELP_STRING([--enable-ifcfg-suse], [enable ifcfg-suse configuration plugin (SUSE)]))
+ AC_ARG_ENABLE(ifupdown, AS_HELP_STRING([--enable-ifupdown], [enable ifupdown configuration plugin (Debian/Ubuntu)]))
+ AC_ARG_ENABLE(ifnet, AS_HELP_STRING([--enable-ifnet], [enable ifnet configuration plugin (Gentoo)]))
+-# Default alternative plugins by distribution
+-AS_IF([test -z "$enable_ifcfg_rh"], AC_CHECK_FILE(/etc/redhat-release, enable_ifcfg_rh=yes))
+-AS_IF([test -z "$enable_ifcfg_rh"], AC_CHECK_FILE(/etc/fedora-release, enable_ifcfg_rh=yes))
+-AS_IF([test -z "$enable_ifcfg_rh"], AC_CHECK_FILE(/etc/mandriva-release, enable_ifcfg_rh=yes))
+-AS_IF([test -z "$enable_ifcfg_suse"], AC_CHECK_FILE(/etc/SuSE-release, enable_ifcfg_suse=yes))
+-AS_IF([test -z "$enable_ifupdown"], AC_CHECK_FILE(/etc/debian_version, enable_ifupdown=yes))
+-AS_IF([test -z "$enable_ifnet"], AC_CHECK_FILE(/etc/gentoo-release, enable_ifnet=yes))
+-# Otherwise plugins default to "no"
+ AS_IF([test -z "$enable_ifcfg_rh"], enable_ifcfg_rh=no)
+ AS_IF([test -z "$enable_ifcfg_suse"], enable_ifcfg_suse=no)
+ AS_IF([test -z "$enable_ifupdown"], enable_ifupdown=no)
+@@ -524,15 +516,15 @@ AC_ARG_WITH([dhcpcd], AS_HELP_STRING([--with-dhcpcd=yes|no|path], [Enable dhcpcd
+ AS_IF([test -z "$with_dhclient"], with_dhclient=yes)
+ AS_IF([test -z "$with_dhcpcd"], with_dhcpcd=yes)
+ # Search and check the executables
+-if test "$with_dhclient" = "yes"; then
+-	AC_PATH_PROGS(with_dhclient, dhclient, no, /sbin:/usr/sbin:/usr/local/sbin)
+-	if test "$with_dhclient" != "no"; then
+-		if ! $with_dhclient --version 2>&1 | grep -q "^isc-dhclient-4\."; then
+-			AC_MSG_WARN([Cannot use dhclient, version 4.x is required])
+-			with_dhclient=no
+-		fi
+-	fi
+-fi
++#if test "$with_dhclient" = "yes"; then
++#	AC_PATH_PROGS(with_dhclient, dhclient, no, /sbin:/usr/sbin:/usr/local/sbin)
++#	if test "$with_dhclient" != "no"; then
++#		if ! $with_dhclient --version 2>&1 | grep -q "^isc-dhclient-4\."; then
++#			AC_MSG_WARN([Cannot use dhclient, version 4.x is required])
++#			with_dhclient=no
++#		fi
++#	fi
++#fi
+ if test "$with_dhcpcd" = "yes"; then
+ 	AC_PATH_PROGS(with_dhcpcd, dhcpcd, no, /sbin:/usr/sbin:/usr/local/sbin)
+ 	if test "$with_dhcpcd" != "no"; then

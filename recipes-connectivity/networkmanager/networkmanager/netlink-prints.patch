@@ -1,0 +1,54 @@
+diff --git a/src/nm-netlink-utils.c b/src/nm-netlink-utils.c
+index 99aebcb..6ec1efc 100644
+--- a/src/nm-netlink-utils.c
++++ b/src/nm-netlink-utils.c
+@@ -207,9 +207,15 @@ _route_add (struct rtnl_route *route,
+ 		tmp_addr = g_malloc0 (addrlen);
+ 		memcpy (tmp_addr, dest, addrlen);
+ 
++		nm_log_info (LOGD_DEVICE | log, "Building dest: %d %d", family, addrlen);
+ 		dest_addr = nl_addr_build (family, tmp_addr, addrlen);
+ 		g_free (tmp_addr);
+ 
++                if(dest_addr == NULL) {                    
++                    nm_log_err (LOGD_DEVICE | log, "Cannot malloc nl_addr!");
++                } else {
++                    nm_log_info (LOGD_DEVICE | log, "Built ok");
++                }
+ 		g_return_val_if_fail (dest_addr != NULL, -NLE_INVAL);
+ 		nl_addr_set_prefixlen (dest_addr, dest_prefix);
+ 
+@@ -222,6 +228,7 @@ _route_add (struct rtnl_route *route,
+ 		tmp_addr = g_malloc0 (addrlen);
+ 		memcpy (tmp_addr, gateway, addrlen);
+ 
++                nm_log_info (LOGD_DEVICE | log, "Building gateway: %d %d", family, addrlen);
+ 		gw_addr = nl_addr_build (family, tmp_addr, addrlen);
+ 		g_free (tmp_addr);
+ 
+@@ -233,13 +240,24 @@ _route_add (struct rtnl_route *route,
+ 		} else
+ 			nm_log_err (LOGD_DEVICE | log, "Invalid gateway");
+ 	}
+-
++    
++        
++        nm_log_info (LOGD_DEVICE | log, "Finally adding route...");
+ 	err = rtnl_route_add (sk, route, flags);
+ 
++        {
++           struct nl_dump_params dp = {
++               .dp_type = NL_DUMP_DETAILS,
++               .dp_fd = stdout,
++           };
++           nl_object_dump ((struct nl_object *) route, &dp);
++        }
++
+ 	/* LIBNL Bug: Aliased ESRCH */
+ 	if (err == -NLE_FAILURE)
+ 		err = -NLE_OBJ_NOTFOUND;
+ 
++        nm_log_info (LOGD_DEVICE | log, "Error is %d", err);
+ 	return err;
+ }
+ 

@@ -1,0 +1,29 @@
+From aaf38f17911941d979074e4d5f8475f4ad5595a8 Mon Sep 17 00:00:00 2001
+From: Nathan Rajlich <nathan@tootallnate.net>
+Date: Tue, 9 Oct 2012 09:49:00 -0700
+Subject: [PATCH] Resolve bad rpath issue when linking
+
+See http://piscisaureus.no.de/libuv/2012-10-09#16:42:44.577 to
+understand the issue.
+
+Added to OE by Jason Kridner <jdk@ti.com>
+---
+ common.gypi |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/common.gypi b/common.gypi
+index b26d2f3..8ae671b 100644
+--- a/common.gypi
++++ b/common.gypi
+@@ -163,7 +163,7 @@
+       [ 'OS=="linux" or OS=="freebsd" or OS=="openbsd" or OS=="solaris"', {
+         'cflags': [ '-Wall', '-pthread', ],
+         'cflags_cc': [ '-fno-rtti', '-fno-exceptions' ],
+-        'ldflags': [ '-pthread', '-rdynamic' ],
++        'ldflags': [ '-pthread' ],
+         'conditions': [
+           [ 'target_arch=="ia32"', {
+             'cflags': [ '-m32' ],
+-- 
+1.7.9.5
+

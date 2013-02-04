@@ -1,0 +1,86 @@
+From d29bc3b0e8b9411d17bc7c02831af1c6c4c62850 Mon Sep 17 00:00:00 2001
+From: Venture Research <tech@ventureresearch.com>
+Date: Fri, 11 Jan 2013 17:06:49 -0600
+Subject: [PATCH] inet-common: use getaddrinfo instead of gethostbyname
+
+Use getaddrinfo() instead of gethostbyname() for ipv4 requests.
+
+Signed-off-by: Kevin Baker <kevinb@ventureresearch.com>
+---
+ libbb/inet_common.c |   33 ++++++++++++++++++++++++---------
+ 1 files changed, 24 insertions(+), 9 deletions(-)
+
+diff --git a/libbb/inet_common.c b/libbb/inet_common.c
+index 7208db9..acf6e60 100644
+--- a/libbb/inet_common.c
++++ b/libbb/inet_common.c
+@@ -13,7 +13,9 @@
+ 
+ int FAST_FUNC INET_resolve(const char *name, struct sockaddr_in *s_in, int hostfirst)
+ {
+-	struct hostent *hp;
++	struct addrinfo req, *ai = NULL;
++	int s;
++
+ #if ENABLE_FEATURE_ETC_NETWORKS
+ 	struct netent *np;
+ #endif
+@@ -31,20 +33,27 @@ int FAST_FUNC INET_resolve(const char *name, struct sockaddr_in *s_in, int hostf
+ 	if (inet_aton(name, &s_in->sin_addr)) {
+ 		return 0;
+ 	}
++
+ 	/* If we expect this to be a hostname, try hostname database first */
+ #ifdef DEBUG
+ 	if (hostfirst) {
+-		bb_error_msg("gethostbyname(%s)", name);
++		bb_error_msg("getaddrinfo(%s)", name);
+ 	}
+ #endif
++
+ 	if (hostfirst) {
+-		hp = gethostbyname(name);
+-		if (hp != NULL) {
+-			memcpy(&s_in->sin_addr, hp->h_addr_list[0],
++		memset(&req, 0, sizeof(req));
++		req.ai_family = AF_INET;
++		s = getaddrinfo(name, NULL, &req, &ai);
++		if (s == 0) {
++			memcpy(&s_in->sin_addr, ai->ai_addr->sa_data,
+ 				sizeof(struct in_addr));
++			if (ai)
++				freeaddrinfo(ai);
+ 			return 0;
+ 		}
+ 	}
++
+ #if ENABLE_FEATURE_ETC_NETWORKS
+ 	/* Try the NETWORKS database to see if this is a known network. */
+ #ifdef DEBUG
+@@ -63,13 +72,19 @@ int FAST_FUNC INET_resolve(const char *name, struct sockaddr_in *s_in, int hostf
+ #ifdef DEBUG
+ 	res_init();
+ 	_res.options |= RES_DEBUG;
+-	bb_error_msg("gethostbyname(%s)", name);
++	bb_error_msg("getaddrinfo(%s)", name);
+ #endif
+-	hp = gethostbyname(name);
+-	if (hp == NULL) {
++
++	memset(&req, 0, sizeof(req));
++	req.ai_family = AF_INET;
++	s = getaddrinfo(name, NULL, &req, &ai);
++	if (s != 0) {
+ 		return -1;
+ 	}
+-	memcpy(&s_in->sin_addr, hp->h_addr_list[0], sizeof(struct in_addr));
++	memcpy(&s_in->sin_addr, ai->ai_addr->sa_data,
++		sizeof(struct in_addr));
++	if (ai)
++		freeaddrinfo(ai);
+ 	return 0;
+ }
+ 
+-- 
+1.7.0.4
+

@@ -1,0 +1,13 @@
+diff --git a/src/nm-system.c b/src/nm-system.c
+index 91153ec..792e125 100644
+--- a/src/nm-system.c
++++ b/src/nm-system.c
+@@ -856,6 +856,8 @@ replace_default_ip4_route (int ifindex, guint32 gw, guint32 mss)
+ 	struct nl_sock *nlh;
+ 	int err = -1;
+ 	guint32 dst = 0;
++    
++        nm_log_info(LOGD_DEVICE | LOGD_IP4, "replacing default route: %d %d %d",ifindex,gw,mss);
+ 
+ 	g_return_val_if_fail (ifindex > 0, -ENODEV);
+ 

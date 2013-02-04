@@ -1,0 +1,35 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          nscd
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: nscd
+# Description:       unscd, an 'name services cache daemon' replacement.
+### END INIT INFO
+
+DAEMONARGS="-f /etc/nscd.conf"
+
+[ ! -x $DAEMONLOC ] && exit 0
+
+. /etc/default/rcS
+
+case "$1" in
+        start)
+                echo -n "Starting nscd: nscd..."
+                /sbin/start-stop-daemon --start --quiet --pidfile /var/run/nscd.pid --make-pidfile --exec /usr/sbin/nscd -- $DAEMONARGS > /dev/null &
+		echo "done."
+                ;;
+        stop)
+                echo -n "Ending nscd..."
+		/sbin/start-stop-daemon --stop --quiet --exec /usr/sbin/nscd
+		echo "done."
+                ;;
+	show)
+		;;
+        *)
+                echo "usage: /etc/init.d/nscd start|stop|restart"
+                exit 1
+                ;;
+esac

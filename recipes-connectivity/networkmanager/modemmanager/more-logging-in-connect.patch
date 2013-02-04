@@ -1,0 +1,161 @@
+diff --git a/plugins/mm-modem-gobi-gsm.c b/plugins/mm-modem-gobi-gsm.c
+index eea13ce..cd89c7a 100644
+--- a/plugins/mm-modem-gobi-gsm.c
++++ b/plugins/mm-modem-gobi-gsm.c
+@@ -84,6 +84,77 @@ get_act_request_done (MMAtSerialPort *port,
+     mm_callback_info_schedule (info);
+ }
+ 
++/*static void
++set_allowed_mode_done (MMAtSerialPort *port,
++                       GString *response,
++                       GError *error,
++                       gpointer user_data)
++{
++    MMCallbackInfo *info = (MMCallbackInfo *) user_data;
++
++    / * If the modem has already been removed, return without
++     * scheduling callback * /
++    if (mm_callback_info_check_modem_removed (info))
++        return;
++
++    if (error)
++        info->error = g_error_copy (error);
++
++    mm_callback_info_schedule (info);
++}*/
++
++static void
++set_allowed_mode (MMGenericGsm *gsm,
++                  MMModemGsmAllowedMode mode,
++                  MMModemFn callback,
++                  gpointer user_data)
++{
++    MMCallbackInfo *info;
++/*    MMAtSerialPort *port;
++    int a, b;
++    char *command; */
++
++    info = mm_callback_info_new (MM_MODEM (gsm), callback, user_data);
++        
++    mm_callback_info_schedule (info);
++
++/*    port = mm_generic_gsm_get_best_at_port (gsm, &info->error);
++    if (!port) {
++        mm_callback_info_schedule (info);
++        return;
++    }
++
++    switch (mode) {
++    case MM_MODEM_GSM_ALLOWED_MODE_2G_ONLY:
++        a = 13;
++        b = 1;
++        break;
++    case MM_MODEM_GSM_ALLOWED_MODE_3G_ONLY:
++        a = 14;
++        b = 2;
++        break;
++    case MM_MODEM_GSM_ALLOWED_MODE_2G_PREFERRED:
++        a = 2;
++        b = 1;
++        break;
++    case MM_MODEM_GSM_ALLOWED_MODE_3G_PREFERRED:
++        a = 2;
++        b = 2;
++        break;
++    case MM_MODEM_GSM_ALLOWED_MODE_ANY:
++    default:
++        a = 2;
++        b = 0;
++        break;
++    }
++
++    command = g_strdup_printf ("AT^SYSCFG=%d,%d,40000000,2,4", a, b);
++    mm_at_serial_port_queue_command (port, command, 3, set_allowed_mode_done, info);
++    g_free (command);
++*/
++}
++
++
+ static void
+ get_access_technology (MMGenericGsm *modem,
+                        MMModemUIntFn callback,
+@@ -171,5 +242,6 @@ mm_modem_gobi_gsm_class_init (MMModemGobiGsmClass *klass)
+     MMGenericGsmClass *gsm_class = MM_GENERIC_GSM_CLASS (klass);
+ 
+     gsm_class->get_access_technology = get_access_technology;
++    gsm_class->set_allowed_mode = set_allowed_mode;
+ }
+ 
+diff --git a/src/mm-generic-gsm.c b/src/mm-generic-gsm.c
+index 23378b2..0c8fbbb 100644
+--- a/src/mm-generic-gsm.c
++++ b/src/mm-generic-gsm.c
+@@ -5762,8 +5762,10 @@ simple_get_allowed_mode (MMCallbackInfo *info,
+     if (simple_get_uint_property (info, "allowed_mode", &allowed_mode, &tmp_error)) {
+         if (allowed_mode > MM_MODEM_GSM_ALLOWED_MODE_LAST) {
+             g_set_error (&tmp_error, MM_MODEM_ERROR, MM_MODEM_ERROR_GENERAL,
+-                         "Invalid allowed mode %d", old_mode);
++                         "Invalid allowed mode %d", allowed_mode);
+         } else {
++    
++            mm_dbg ("       found allowed mode:%d", allowed_mode);
+             *out_mode = allowed_mode;
+             return TRUE;
+         }
+@@ -5772,8 +5774,9 @@ simple_get_allowed_mode (MMCallbackInfo *info,
+         if (simple_get_uint_property (info, "network_mode", &old_mode, &tmp_error)) {
+             if (old_mode > MM_MODEM_GSM_NETWORK_DEPRECATED_MODE_LAST) {
+                 g_set_error (&tmp_error, MM_MODEM_ERROR, MM_MODEM_ERROR_GENERAL,
+-                             "Invalid allowed mode %d", old_mode);
++                             "Invalid old mode %d", old_mode);
+             } else {
++                mm_dbg ("       found old mode:%d", old_mode);
+                 *out_mode = mm_modem_gsm_network_old_mode_to_allowed (old_mode);
+                 return TRUE;
+             }
+@@ -5842,8 +5845,10 @@ simple_state_machine (MMModem *modem, GError *error, gpointer user_data)
+         break;
+     case SIMPLE_STATE_ALLOWED_MODE:
+         next_state = SIMPLE_STATE_REGISTER;
+-        if (   simple_get_allowed_mode (info, &allowed_mode, &info->error)
+-            && (allowed_mode != priv->allowed_mode)) {
++        mm_dbg ("       checking allowed mode = %d", priv->allowed_mode);
++        if (   (simple_get_allowed_mode (info, &allowed_mode, &info->error)
++            && (allowed_mode != priv->allowed_mode)) ) {        
++            mm_dbg ("       setting allowed mode -> %d", allowed_mode);
+             mm_modem_gsm_network_set_allowed_mode (MM_MODEM_GSM_NETWORK (modem),
+                                                    allowed_mode,
+                                                    simple_state_machine,
+@@ -5855,16 +5860,21 @@ simple_state_machine (MMModem *modem, GError *error, gpointer user_data)
+     case SIMPLE_STATE_REGISTER:
+         next_state = SIMPLE_STATE_SET_APN;
+         str = simple_get_string_property (info, "network_id", &info->error);
+-        if (info->error)
++        if (info->error) {
+             str = NULL;
++        } else {
++            mm_dbg ("       registering on network... network: %s", str);
++        }
+         mm_modem_gsm_network_register (MM_MODEM_GSM_NETWORK (modem), str, simple_state_machine, info);
+         break;
+     case SIMPLE_STATE_SET_APN:
+         next_state = SIMPLE_STATE_CONNECT;
+         str = simple_get_string_property (info, "apn", &info->error);
+         if (str || info->error) {
+-            if (str)
++            if (str) {
++                mm_dbg ("       setting APN... APN: %s", str);
+                 mm_modem_gsm_network_set_apn (MM_MODEM_GSM_NETWORK (modem), str, simple_state_machine, info);
++            }
+             break;
+         }
+         /* Fall through if no APN or no 'apn' property error */
+@@ -5888,6 +5898,7 @@ simple_state_machine (MMModem *modem, GError *error, gpointer user_data)
+             } else if (info->error)
+                 break;
+ 
++            mm_dbg ("       connecting...");
+             mm_modem_connect (modem, str, simple_state_machine, info);
+         }
+         break;

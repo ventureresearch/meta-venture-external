@@ -1,0 +1,21 @@
+diff --git a/Makefile b/Makefile
+index d02a64a..7dabf49 100644
+--- a/Makefile
++++ b/Makefile
+@@ -195,16 +195,6 @@ docclean:
+ VERSION=v$(shell $(PYTHON) tools/getnodeversion.py)
+ RELEASE=$(shell $(PYTHON) tools/getnodeisrelease.py)
+ PLATFORM=$(shell uname | tr '[:upper:]' '[:lower:]')
+-ifeq ($(findstring x86_64,$(shell uname -m)),x86_64)
+-DESTCPU ?= x64
+-else
+-DESTCPU ?= ia32
+-endif
+-ifeq ($(DESTCPU),x64)
+-ARCH=x64
+-else
+-ARCH=x86
+-endif
+ TARNAME=node-$(VERSION)
+ TARBALL=$(TARNAME).tar.gz
+ BINARYNAME=$(TARNAME)-$(PLATFORM)-$(ARCH)

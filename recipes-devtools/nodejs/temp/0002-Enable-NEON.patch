@@ -1,0 +1,27 @@
+From 8891cb4cae57a6b7db54edb33a43743c4b09c53a Mon Sep 17 00:00:00 2001
+From: Jason Kridner <jdk@ti.com>
+Date: Wed, 7 Nov 2012 14:43:55 -0500
+Subject: [PATCH] Enable NEON
+
+Read this was necessary on a blog.
+
+http://www.code-with-passion.com/2012/11/07/cross-compiling-nodejs-and-node-modules-for-armbeaglebone/
+---
+ deps/v8/build/common.gypi |    1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/deps/v8/build/common.gypi b/deps/v8/build/common.gypi
+index 7a780cc..237f53f 100644
+--- a/deps/v8/build/common.gypi
++++ b/deps/v8/build/common.gypi
+@@ -29,6 +29,7 @@
+ 
+ {
+   'variables': {
++    'arm_neon%': 1,
+     'use_system_v8%': 0,
+     'msvs_use_common_release': 0,
+     'gcc_version%': 'unknown',
+-- 
+1.7.9.5
+
