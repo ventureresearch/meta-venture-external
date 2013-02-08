@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# node-gyp symlink is now found in /usr/bin/
+node "`dirname "$0"`/../lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js" "$@"

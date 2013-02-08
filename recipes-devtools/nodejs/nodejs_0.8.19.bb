@@ -3,15 +3,17 @@ HOMEPAGE = "http://nodejs.org"
 LICENSE = "MIT & BSD"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=95a589a3257ab7dfe37d8a8379e3c72d"
 
+PR="r5"
+
 DEPENDS = "openssl"
 
 SRC_URI = "http://nodejs.org/dist/v${PV}/node-v${PV}.tar.gz \
            file://0001-Fix-hardfloat-detection.patch \
            file://0002-Enable-NEON.patch \
-           file://0003-Resolve-bad-rpath-issue-when-linking.patch \
           "
-SRC_URI[md5sum] = "284fd2c7578064c339d9cf6a3a475ac7"
-SRC_URI[sha256sum] = "e5ce2aadb4df3ea4ca7a021106ffe09d286474476454038e9ed0135eac18e6d0"
+
+SRC_URI[md5sum] = "db70f9ce88ce460c43dc57bec3a0fb6a"
+SRC_URI[sha256sum] = "703207d7b394bd3d4035dc3c94b417ee441fd3ea66aa90cd3d7c9bb28e5f9df4"
 
 S = "${WORKDIR}/node-v${PV}"
 
@@ -25,7 +27,8 @@ do_configure () {
 }
 
 do_install () {
-  DESTDIR=${D} oe_runmake install
+  export DESTDIR="${D}"
+  oe_runmake install
 }
 
 RDEPENDS_${PN} = "curl python-shell python-datetime python-subprocess python-crypt python-textutils python-netclient "

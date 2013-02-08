@@ -10,11 +10,11 @@ DEPENDS = "openssl"
 SRC_URI = "http://nodejs.org/dist/v${PV}/node-v${PV}.tar.gz \
            file://0001-Fix-hardfloat-detection.patch \
            file://0002-Enable-NEON.patch \
-           file://0003-Resolve-bad-rpath-issue-when-linking.patch \
+           file://node-gyp \
           "
 
-SRC_URI[md5sum] = "6cb31180b07475db103e694f65e8bb9b"
-SRC_URI[sha256sum] = "1758639c6df3e081fe26585472d0f1961c5703b44ba6c57ecdf66a4c015792b1"
+SRC_URI[md5sum] = "db70f9ce88ce460c43dc57bec3a0fb6a"
+SRC_URI[sha256sum] = "703207d7b394bd3d4035dc3c94b417ee441fd3ea66aa90cd3d7c9bb28e5f9df4"
 
 S = "${WORKDIR}/node-v${PV}"
 
@@ -25,19 +25,13 @@ CCACHE = ""
 
 do_configure () {
   export LD="${CXX}"
-  #./configure --without-snapshot --dest-cpu=arm --dest-os=linux --prefix=${prefix}
-  ./configure --prefix=${prefix} --without-snapshot
+  ./configure --prefix=${prefix}
 }
 
-do_install () {
+do_install() {
   export DESTDIR="${D}"
   oe_runmake install
-
+  install -m 0755 ${WORKDIR}/node-gyp ${D}${bindir}/node-gyp
 }
 
-do_gyp() {
-  npm install -g node-gyp
-}
-addtask gyp after do_install before do_package
-
-FILES_${PN} += "${libdir}/node/wafadmin ${libdir}/node_modules ${bindir}/node-gyp"
+FILES_${PN} += "${libdir}/node/wafadmin ${libdir}/node_modules ${bindir}/npm ${bindir}/node-gyp"

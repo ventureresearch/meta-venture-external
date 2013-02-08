@@ -1,17 +1,19 @@
 DESCRIPTION = "node-sqlite3 - Asynchronous, non-blocking SQLite3 bindings for Node.js"
 HOMEPAGE = "https://github.com/developmentseed/node-sqlite3"
 LICENSE = "BSD"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=df600e0b6e9f49ab679b423a4588f7a5"
+LIC_FILES_CHKSUM = "file://package.json;md5=a9ea81e283fcd9d9b3cd7c41a025334e;startline=26;endline=26"
 
 PR="r5"
 
-DEPENDS = "nodejs sqlite3"
+DEPENDS = "nodejs nodejs-native python-native sqlite3"
+RDEPENDS = "nodejs"
 
-
-SRC_URI = "git://github.com/developmentseed/node-sqlite3.git;protocol=https \
+SRC_URI = "git://github.com/ventureresearch/node-sqlite-fts.git;protocol=https \
           "
 
-SRCREV="1173659e01ebf949e711a3a20d8bdca0cc6bcc75"
+inherit pythonnative
+
+SRCREV="f376a9326576cde97911bc61558da7b3368e6b98"
 
 S = "${WORKDIR}/git"
 
@@ -20,13 +22,23 @@ CCACHE = ""
 
 do_configure () {
   export LD="${CXX}"
-  #./configure --without-snapshot --dest-cpu=arm --dest-os=linux --prefix=${prefix}
-  ./configure --prefix=${prefix} --without-snapshot
+  export CFLAGS="${CFLAGS} -fPIC"
+  export CXXFLAGS="${CXXFLAGS} -fPIC"
+  node-gyp configure -v
+}
+
+do_compile() {
+  export LD="${CXX}"
+  export CFLAGS="${CFLAGS} -fPIC"
+  export CXXFLAGS="${CXXFLAGS} -fPIC"
+  node-gyp build -v
 }
 
 do_install () {
-  export DESTDIR="${D}"
-  oe_runmake install
+  install -d ${D}/${libdir}/node_modules/npm/node_modules/sqlite3-fts
+  install -m 0644 ${S}/build/Release/sqlite3_bindings.node ${D}/${libdir}/node_modules/npm/node_modules/sqlite3-fts/sqlite3-fts.node
 }
+
+FILES_${PN} = "${libdir}/node_modules/npm/node_modules/sqlite3-fts/sqlite3-fts.node"
 
 RDEPENDS_${PN} = "sqlite3"
